@@ -1,12 +1,59 @@
-🚀 FFT-Based Motion Detection on STM32F4Real-time motion classification using frequency-domain analysis on an STM32F4 (Cortex-M4) microcontroller.Instead of traditional threshold-based motion detection, this project implements a full DSP pipeline using CMSIS-DSP to analyze accelerometer signals in the frequency domain.## 📌 OverviewThis project captures accelerometer data from the MPU-6050 over I2C and processes it using an optimized FFT pipeline to classify motion states such as:🧍 Standing🚶 Walking🏃 RunningThe system leverages hardware FPU and DSP instructions available in the Cortex-M4 for efficient real-time signal processing.## 🧠 Why Frequency-Domain Motion Detection?Traditional motion detection:if(acceleration &gt; threshold) → motion
-This approach:Time Domain → FFT → Frequency Analysis → Motion Classification
-Advantages:Detects periodic motion patternsReduces noise sensitivityEnables activity classificationMore robust than simple thresholding## ⚙️ System Architecture### 🔹 HardwareSTM32F4 (Cortex-M4 with FPU)MPU-6050 Accelerometer (I2C)### 🔹 SamplingFixed sampling rate (e.g., 200–500 Hz)Buffer size: 256 samples (configurable)## 🔬 DSP Processing Pipeline### ✔ 1. Acceleration MagnitudeCompute combined motion intensity:|A| = √(Ax² + Ay² + Az²)
-### ✔ 2. DC RemovalRemoves gravity (~1g DC component) so FFT focuses on motion dynamics.mean = Σx / N
-x[i] = x[i] - mean
-### ✔ 3. Windowing (Hanning Window)Reduces spectral leakage before FFT:float window = 0.5f *
-    (1.0f - arm_cos_f32((2.0f * PI * i) / (FFT_SIZE - 1)));
-### ✔ 4. FFT (CMSIS-DSP)Using optimized Real FFT for Cortex-M4:arm_rfft_fast_f32(&amp;fft_instance, fft_input, fft_output, 0);
+# 🚀 FFT-Based Motion Detection on STM32F4
+
+Real-time motion classification using frequency-domain analysis on an STM32F4 (Cortex-M4) microcontroller.
+
+Instead of traditional threshold-based motion detection, this project implements a full DSP pipeline using **CMSIS-DSP** to analyze accelerometer signals in the frequency domain.
+
+---
+
+## 📌 Overview
+This project captures accelerometer data from the **MPU-6050** over I2C and processes it using an optimized FFT pipeline to classify motion states:
+
+* 🧍 **Standing** (Idle)
+* 🚶 **Walking** (Low-frequency rhythmic motion)
+* 🏃 **Running** (High-frequency rhythmic motion)
+
+The system leverages the hardware **FPU** (Floating Point Unit) and **DSP instructions** available in the Cortex-M4 for efficient real-time signal processing.
+
+## 🧠 Why Frequency-Domain?
+Traditional motion detection often uses simple logic: `if(acceleration > threshold) → motion`. 
+
+**The FFT Approach Advantages:**
+* **Periodic Pattern Detection:** Differentiates between a random bump and a rhythmic gait.
+* **Noise Sensitivity:** Filters out high-frequency mechanical vibrations.
+* **Robustness:** Enables actual activity classification rather than just "moving/not moving."
+
+---
+
+## ⚙️ System Architecture
+
+### 🔹 Hardware
+* **MCU:** STM32F4 Series (Cortex-M4)
+* **Sensor:** MPU-6050 (3-Axis Accelerometer) via I2C
+* **Clock:** Configured for maximum performance (e.g., 168MHz)
+
+### 🔹 Sampling & Buffering
+* **Sampling Rate:** 200–500 Hz
+* **Buffer Size ($N$):** 256 samples
+* **Overlap:** 50% (128 samples shifted) to improve temporal resolution.
+
+---
+
+## 🔬 DSP Processing Pipeline
+
+### 1. Acceleration Magnitude
+To make detection orientation-independent, we calculate the magnitude:
+$$|A| = \sqrt{A_x^2 + A_y^2 + A_z^2}$$
+
+### 2. DC Removal & Windowing
+* **DC Removal:** Subtract the mean to remove the $1g$ gravity component.
+* **Hanning Window:** Applied to reduce spectral leakage before the FFT.
+    ```c
+    float window = 0.5f * (1.0f - arm_cos_f32((2.0f * PI * i) / (FFT_SIZE - 1)));
+    ```
+
+### 3. FFT Execution (CMSIS-DSP)
+We use the **Real FFT (RFFT)** function. Since accelerometer data is real-valued, RFFT is twice as fast and uses half the memory of a Complex FFT (CFFT).
+```c
+arm_rfft_fast_f32(&fft_instance, fft_input, fft_output, 0);
 arm_cmplx_mag_f32(fft_output, fft_mag, FFT_SIZE/2);
-Why RFFT instead of CFFT?Accelerometer data is real-valuedExploits conjugate symmetryReduces memory usageImproves execution speed### ✔ 5. RMS GatingRMS measures total signal energy:RMS = sqrt(mean(x²))
-If RMS is too small:No meaningful motionIgnore FFT peaksPrevent false triggers### ✔ 6. Band LimitingOnly analyze frequency range relevant to human motion.Eliminates:High-frequency noiseUnnecessary computation### ✔ 7. Peak Frequency DetectionExtract dominant motion frequency from magnitude spectrum.Time Domain → Frequency Domain → Peak Detection
-### ✔ 8. Multi-Frame Stability FilteringMotion frequency must remain stable across 4 consecutive FFT windows.Prevents:Noise spikesFalse classification### ✔ 9. Overlap ProcessingInstead of discarding full buffer:Shift half-bufferReuse samplesImprove temporal resolutionResult:Smoother detectionFaster transitions## 📊 Motion Classification LogicConditionClassificationLow RMSStanding0.8–3.8 HzWalking3.8–10 HzRunning## 🚀 Key FeaturesReal-time FFT on STM32F4CMSIS-DSP optimized implementationEfficient memory usageNoise-resistant motion detectionMulti-frame stability filteringOverlap-based processingActivity classification## 🛠️ Optimization TechniquesReal FFT instead of Complex FFTFPU accelerationBand-limited peak searchRMS gating to skip unnecessary computationReduced memory footprint## 📈 Future ImprovementsMachine learning-based classificationVibration analysis extensionPredictive maintenance applicationsFreeRTOS integrationUART streaming for visualizationSpectral feature extraction (centroid, bandwidth, kurtosis)## 🧑‍💻 What This Project DemonstratesEmbedded DSP implementationReal-time signal acquisitionFrequency-domain motion analysisEfficient MCU optimizationPractical use of CMSIS-DSP library## 🏷️ KeywordsSTM32 Cortex-M4 CMSIS-DSP FFT Embedded Systems Signal Processing Motion Detection Edge Computing
