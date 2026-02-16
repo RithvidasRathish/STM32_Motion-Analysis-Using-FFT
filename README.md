@@ -30,7 +30,7 @@ Traditional motion detection often uses simple logic: `if(acceleration > thresho
 ### 🔹 Hardware
 * **MCU:** STM32F4 Series (Cortex-M4)
 * **Sensor:** MPU-6050 (3-Axis Accelerometer) via I2C
-* **Clock:** Configured for maximum performance (e.g., 168MHz)
+* **Clock:** Configured for maximum performance (At 84MHz)
 
 ### 🔹 Sampling & Buffering
 * **Sampling Rate:** 200–500 Hz
